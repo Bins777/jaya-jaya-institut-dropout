@@ -40,6 +40,9 @@ pip install -r requirements.txt
 
 - `train_model.py` — script training model (menghasilkan `model/model.joblib` dan `model/metadata.json`).
 - `prepare_dashboard_data.py` — menghasilkan `data_dashboard.csv` (data berlabel + skor risiko model) yang menjadi sumber data dashboard Metabase.
+- `load_dashboard_db.py` — memuat `data_dashboard.csv` ke `students.db` (SQLite, tabel `students`) agar bisa dibaca Metabase.
+- `metabase_setup.py` — membangun seluruh question & dashboard Metabase secara otomatis lewat Metabase API.
+- `validate_submission.py` — memeriksa kelengkapan struktur submission (lihat `METABASE_SETUP.md` untuk panduan dashboard).
 
 ## Business Dashboard
 
@@ -61,13 +64,24 @@ Dashboard **"Jaya Jaya Institut — Student Monitoring"** menampilkan:
 - Email: `root@mail.com`
 - Password: `root123`
 
+Sumber data dashboard dimuat ke SQLite (`students.db`, tabel `students`) karena
+Metabase tidak dapat membaca CSV secara langsung:
+
+```bash
+python load_dashboard_db.py        # data_dashboard.csv -> students.db
+```
+
 Cara menjalankan Metabase beserta file dashboard yang sudah diekspor:
 
 ```bash
 docker run -d -p 3000:3000 --name metabase \
   -v $(pwd)/metabase.db.mv.db:/metabase.db/metabase.db.mv.db \
+  -v $(pwd)/students.db:/data/students.db \
   metabase/metabase
 ```
+
+Panduan lengkap membangun ulang dashboard dari nol (termasuk SQL setiap
+question) ada di **`METABASE_SETUP.md`**.
 
 Screenshot dashboard tersedia pada berkas `Georgius_bintang-dashboard.png`.
 
