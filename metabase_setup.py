@@ -211,9 +211,14 @@ CARDS = [
          "ROUND(AVG(is_dropout) * 100, 1) AS dropout_rate_pct "
          "FROM students GROUP BY course ORDER BY dropout_rate_pct DESC",
          "row", "Program studi diurutkan dari dropout rate tertinggi.",
+         # max_categories_enabled=False: without it Metabase collapses the
+         # tail into an "Other (9)" bar and SUMS the percentages, which is
+         # meaningless for a rate. All 17 program studi must be shown.
          {"graph.dimensions": ["label"],
           "graph.metrics": ["dropout_rate_pct"],
-          "graph.show_values": True}, (12, 6)),
+          "graph.max_categories_enabled": False,
+          "graph.max_categories": 17,
+          "graph.show_values": True}, (12, 9)),
 
     # ---- dropout rate breakdowns -----------------------------------------
     card("Dropout Rate per Status Pembayaran",
