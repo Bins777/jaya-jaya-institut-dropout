@@ -15,18 +15,24 @@ Usage
 -----
     python metabase_setup.py
 
+Set MB_HOST if Metabase is not on port 3000, e.g.
+
+    MB_HOST=http://localhost:3030 python metabase_setup.py
+
 The script is idempotent: it creates the admin account only if Metabase has
 not been set up yet, reuses an existing "Jaya Jaya Institut" database
 connection, and updates cards/dashboards it created on an earlier run.
 Standard library only - no extra pip installs.
 """
 import json
+import os
 import sys
 import time
 import urllib.error
 import urllib.request
 
-HOST = "http://localhost:3000"
+# Override when port 3000 is taken, e.g.  MB_HOST=http://localhost:3030
+HOST = os.environ.get("MB_HOST", "http://localhost:3000").rstrip("/")
 EMAIL = "root@mail.com"
 PASSWORD = "root123"
 FIRST, LAST = "Georgius", "Bintang"

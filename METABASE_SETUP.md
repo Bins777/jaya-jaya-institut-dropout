@@ -7,18 +7,23 @@ Semua langkah sudah diotomatisasi; kamu hanya perlu Docker.
 
 ## 0. Prasyarat
 
-Docker belum terpasang di mesin ini. Pasang **Docker Desktop for Windows** dulu:
+Pasang **Docker Desktop for Windows**:
 
 ```powershell
 winget install -e --id Docker.DockerDesktop
 ```
 
-Setelah instalasi selesai, **restart Windows**, jalankan Docker Desktop, dan
-tunggu ikon whale-nya hijau (`Engine running`). Verifikasi:
+Jalankan Docker Desktop dan tunggu ikon whale-nya hijau (`Engine running`),
+lalu verifikasi:
 
 ```powershell
 docker version
 ```
+
+> **Catatan port.** Di mesin ini port `3000` sudah dipakai Grafana, sehingga
+> Metabase dijalankan di port **3030** (`-p 3030:3000`) dan script dipanggil
+> dengan `MB_HOST=http://localhost:3030`. Kalau port 3000 kamu bebas, pakai
+> `-p 3000:3000` dan `MB_HOST` tidak perlu diisi.
 
 ---
 
@@ -70,6 +75,8 @@ Berhenti menunggu ketika muncul baris **`Metabase Initialization COMPLETE`**
 
 ```powershell
 .\.venv\Scripts\python.exe metabase_setup.py
+# kalau Metabase jalan di port lain:
+$env:MB_HOST = "http://localhost:3030"; .\.venv\Scripts\python.exe metabase_setup.py
 ```
 
 Script ini (via Metabase API, stdlib saja) akan:
