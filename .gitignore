@@ -19,3 +19,6 @@ Thumbs.db
 
 # Build artefacts
 submission.zip
+
+# Scaffolding, not part of the Dicoding submission
+CLAUDE_CODE_PROMPT.md

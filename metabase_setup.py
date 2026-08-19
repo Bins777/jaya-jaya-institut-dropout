@@ -206,19 +206,19 @@ CARDS = [
          "FROM students GROUP BY status ORDER BY jumlah_siswa DESC",
          "pie", "Komposisi Dropout / Enrolled / Graduate.",
          {"pie.dimension": "label", "pie.metric": "jumlah_siswa"}, (12, 6)),
-    card("Dropout Rate per Program Studi",
-         "SELECT course AS label, COUNT(*) AS jumlah_siswa, "
-         "ROUND(AVG(is_dropout) * 100, 1) AS dropout_rate_pct "
-         "FROM students GROUP BY course ORDER BY dropout_rate_pct DESC",
-         "row", "Program studi diurutkan dari dropout rate tertinggi.",
-         # max_categories_enabled=False: without it Metabase collapses the
-         # tail into an "Other (9)" bar and SUMS the percentages, which is
-         # meaningless for a rate. All 17 program studi must be shown.
+    card("Rata-rata SKS Lulus Semester 1-2 per Status",
+         "SELECT status AS label, "
+         "ROUND(AVG(units_2nd_sem_approved), 2) AS avg_units_2nd_sem_approved, "
+         "ROUND(AVG(units_1st_sem_approved), 2) AS avg_units_1st_sem_approved "
+         "FROM students GROUP BY status "
+         "ORDER BY avg_units_2nd_sem_approved DESC",
+         "bar",
+         "Perbandingan performa akademik semester awal antar status siswa.",
          {"graph.dimensions": ["label"],
-          "graph.metrics": ["dropout_rate_pct"],
-          "graph.max_categories_enabled": False,
-          "graph.max_categories": 17,
-          "graph.show_values": True}, (12, 9)),
+          "graph.metrics": ["avg_units_2nd_sem_approved",
+                            "avg_units_1st_sem_approved"],
+          "graph.y_axis.title_text": "Rata-rata SKS lulus",
+          "graph.show_values": True}, (12, 6)),
 
     # ---- dropout rate breakdowns -----------------------------------------
     card("Dropout Rate per Status Pembayaran",
@@ -250,20 +250,23 @@ CARDS = [
          "FROM students GROUP BY gender ORDER BY dropout_rate_pct DESC",
          "bar", "Dropout rate menurut gender.", BAR_VIZ, (12, 5)),
 
-    # ---- academic performance --------------------------------------------
-    card("Rata-rata SKS Lulus Semester 1-2 per Status",
-         "SELECT status AS label, "
-         "ROUND(AVG(units_2nd_sem_approved), 2) AS avg_units_2nd_sem_approved, "
-         "ROUND(AVG(units_1st_sem_approved), 2) AS avg_units_1st_sem_approved "
-         "FROM students GROUP BY status "
-         "ORDER BY avg_units_2nd_sem_approved DESC",
-         "bar",
-         "Perbandingan performa akademik semester awal antar status siswa.",
+    # ---- per-course breakdown --------------------------------------------
+    # Full width and tall on purpose. Metabase collapses the tail of a row
+    # chart into a single "Other (n)" bar whose value is the SUM of the
+    # grouped rows - meaningless for a rate (it read "Other (9) = 255.3").
+    # How many bars survive is driven by the tile height, so the tile must be
+    # tall enough to hold all 17 program studi, not just the flag below.
+    card("Dropout Rate per Program Studi",
+         "SELECT course AS label, COUNT(*) AS jumlah_siswa, "
+         "ROUND(AVG(is_dropout) * 100, 1) AS dropout_rate_pct "
+         "FROM students GROUP BY course ORDER BY dropout_rate_pct DESC",
+         "row", "Seluruh 17 program studi, diurutkan dari dropout rate "
+                "tertinggi.",
          {"graph.dimensions": ["label"],
-          "graph.metrics": ["avg_units_2nd_sem_approved",
-                            "avg_units_1st_sem_approved"],
-          "graph.y_axis.title_text": "Rata-rata SKS lulus",
-          "graph.show_values": True}, (12, 6)),
+          "graph.metrics": ["dropout_rate_pct"],
+          "graph.max_categories_enabled": False,
+          "graph.max_categories": 30,
+          "graph.show_values": True}, (24, 15)),
 
     # ---- risk monitoring --------------------------------------------------
     card("Distribusi Skor Risiko - Siswa Enrolled",
@@ -273,7 +276,7 @@ CARDS = [
           "graph.metrics": ["jumlah_siswa"],
           "graph.x_axis.title_text": "Skor risiko dropout",
           "graph.y_axis.title_text": "Jumlah siswa",
-          "graph.show_values": True}, (12, 6)),
+          "graph.show_values": True}, (24, 6)),
     card("Siswa Enrolled Berisiko Tinggi (skor > 0,6)",
          HIGH_RISK_TABLE_SQL, "table",
          "Daftar prioritas bimbingan khusus: siswa aktif dengan skor "
