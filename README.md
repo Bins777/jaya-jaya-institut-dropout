@@ -97,7 +97,14 @@ streamlit run app.py
 
 **Akses prototype (Streamlit Community Cloud):**
 
-🔗 **[https://GANTI-DENGAN-LINK-ANDA.streamlit.app](https://GANTI-DENGAN-LINK-ANDA.streamlit.app)** <!-- TODO: ganti setelah deploy -->
+🔗 **[https://jaya-jaya-institut-dropout-edsmhdagm34fs4fbyj3p9d.streamlit.app](https://jaya-jaya-institut-dropout-edsmhdagm34fs4fbyj3p9d.streamlit.app)**
+
+Repository: [github.com/Bins777/jaya-jaya-institut-dropout](https://github.com/Bins777/jaya-jaya-institut-dropout)
+
+Cara memakai: isi data siswa pada tab **Akademik / Finansial / Demografi**,
+lalu tekan **Prediksi Risiko Dropout**. Contoh kasus risiko tinggi — tunggakan
+biaya `Yes`, biaya kuliah lancar `No`, SKS lulus semester 1–2 = 1, nilai 6–7 →
+probabilitas dropout **99,8 % (🔴 RISIKO TINGGI)**.
 
 Model yang digunakan: **Logistic Regression** (pipeline dengan StandardScaler), dipilih setelah dibandingkan dengan Random Forest melalui 5-fold cross-validation.
 
