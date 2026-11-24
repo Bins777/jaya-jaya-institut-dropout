@@ -136,8 +136,7 @@ def punctuation_features(text, sents, n_words, lang):
         if total >= 3:
             comma_before[conj] = {"with_comma": len(re.findall(r",\s" + conj + r"\b", low)), "total": total}
 
-    serial = r"\w+, (?:[\w-]+ ){1,3}?(?:and|or|dan|atau|serta) \w"
-    oxford = r"\w+, (?:[\w-]+ ){0,2}?[\w-]+, (?:and|or|dan|atau|serta) \w"
+    lists = re.findall(r"\w+, (?:[\w-]+ ){0,3}?[\w-]+(,)? (?:and|or|dan|atau|serta) \w", low)
     opener_yes = opener_no = 0
     for s in sents:
         sl = s.lower().lstrip("\"“‘(")
@@ -158,8 +157,8 @@ def punctuation_features(text, sents, n_words, lang):
         "pct_sentences_without_comma": pct(sum(n == 0 for n in commas), len(commas)),
         "pct_sentences_with_3plus_commas": pct(sum(n >= 3 for n in commas), len(commas)),
         "comma_before_conjunction": comma_before,
-        "serial_comma": {"with_final_comma": len(re.findall(oxford, low)),
-                         "list_patterns_total": len(re.findall(serial, low))},
+        "serial_comma": {"with_final_comma": sum(1 for g in lists if g),
+                         "list_patterns_total": len(lists)},
         "comma_after_opening_connector": {"with_comma": opener_yes, "without_comma": opener_no},
         "em_dash_spacing": {"spaced": c(r"\s—\s"), "tight": c(r"\S—\S")},
         "numbers": {"digits": c(r"(?<![\w.])\d[\d.,]*"),
@@ -222,8 +221,15 @@ def ngram_features(sents, lang):
                     continue  # 2-3 grams: content collocations only
                 grams[n][" ".join(g)] += 1
     keep = lambda cnt, least, top: [(g, k) for g, k in cnt.most_common(top) if k >= least]
+    phrases, seen = [], set()
+    for g, k in keep(grams[4], 3, 200):  # one entry per repeated passage, not every overlapping window
+        w = g.split()
+        ends = {" ".join(w[:3]), " ".join(w[1:])}
+        if not ends & seen:
+            phrases.append((g, k))
+        seen |= ends
     return {"bigrams": keep(grams[2], 3, 30), "trigrams": keep(grams[3], 2, 20),
-            "recurring_phrases": keep(grams[4], 3, 20)}
+            "recurring_phrases": phrases[:15]}
 
 
 def marker_features(text, sents, words, lang):
@@ -285,12 +291,13 @@ def synonym_features(text, lang):
     return out
 
 
-def pick_excerpts(paras, mean_len, max_excerpts=6, max_words=900):
+def pick_excerpts(paras, mean_len, max_excerpts=8, max_words=1100):
     """Representative paragraphs, spread across the text, used as few-shot samples."""
     cands = []
     for i, p in enumerate(paras):
         n = len(words_of(p))
-        if 40 <= n <= 200:
+        whole = p[0].isupper() and p[-1] in ".!?" and not re.match(r"(?:Figure|Table|Fig\.|Gambar|Tabel)\s+\d", p)
+        if 40 <= n <= 200 and whole:
             s = sentences_of(p)
             cands.append((abs(n / max(1, len(s)) - mean_len), i, p, n))
     if not cands:

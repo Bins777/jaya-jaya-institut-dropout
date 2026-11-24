@@ -1,7 +1,7 @@
 import unittest
 from unittest import mock
 
-from style_agent import analyze, guide, llm
+from style_agent import analyze, extract, guide, llm
 
 PARAS = [
     "Student dropout is an important problem for many institutions, because it affects both the reputation "
@@ -71,6 +71,27 @@ class AnalyzeTest(unittest.TestCase):
             self.assertEqual(llm.rewrite(self.p, "x"), "A result, with a comma.")
         self.assertEqual(m.call_count, 2)
         self.assertIn("em dashes", m.call_args_list[1].args[1])
+
+
+class PdfTidyTest(unittest.TestCase):
+    def test_rebuilds_paragraphs_from_wrapped_pages(self):
+        body = ["We build a graph from offshore-leak records and the registry, and",
+                "we treat membership as a proxy for offshore structuring, a juris-",
+                "dictionally restricted signal taken from the same offshore-",
+                "leak records as before.",
+                "0.91 0.88 0.93 12.5 3",
+                "2 Related Work",
+                "Method.The idea that ownership structure betrays wrongdoing is not",
+                "new."]
+        head = "My Paper Title, Conference 2026"
+        pages = ["\n".join([head] + body + ["1"]), head + "\nSecond page text ends here.\n2",
+                 head + "\nThird page text ends here.\n3"]
+        blocks = extract.tidy_pdf(pages).split("\n\n")
+        self.assertEqual(len(blocks), 4)  # header, page numbers, table row and heading are gone
+        self.assertEqual(blocks[0], "We build a graph from offshore-leak records and the registry, and we treat "
+                         "membership as a proxy for offshore structuring, a jurisdictionally restricted signal "
+                         "taken from the same offshore-leak records as before.")
+        self.assertEqual(blocks[1], "Method. The idea that ownership structure betrays wrongdoing is not new.")
 
 
 if __name__ == "__main__":

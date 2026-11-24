@@ -113,6 +113,7 @@ SYNONYM_SETS = {
                     "boost": r"boost\w*", "optimize": r"optimi[sz]\w*"},
         "problem": {"problem": r"problems?", "issue": r"issues?", "challenge": r"challenges?",
                     "obstacle": r"obstacles?"},
+        "rather": {"instead of": r"instead of", "rather than": r"rather than", "as opposed to": r"as opposed to"},
         "start": {"start": r"start(?:s|ed|ing)?", "begin": r"beg[iau]n(?:s|ning)?", "commence": r"commenc\w*"},
         "think": {"think": r"think(?:s|ing)?|thought", "believe": r"believ\w*", "argue": r"argu\w*",
                   "assume": r"assum\w*", "consider": r"consider(?:s|ed|ing)?"},
@@ -146,7 +147,11 @@ SYNONYM_SETS = {
 ABBREVIATIONS = set("""e.g i.e etc vs cf al fig figs eq eqs no nos dr mr mrs ms prof st sr jr vol pp p
 ed eds approx dept inc ltd dll dsb dst dkk hlm tsb yth""".split())
 
+_ROOTS = (r"(?:organi|reali|recogni|utili|optimi|minimi|maximi|generali|normali|characteri|summari|"
+          r"emphasi|categori|visuali|standardi|speciali|prioriti|initiali|regulari|centrali|tokeni|"
+          r"parameteri|formali|penali|capitali|locali|randomi|digiti|moderni|stabili|synthesi|hypothesi|"
+          r"criminali|legali|incentivi|contextuali|operationali|criti[cs]i|apologi|memori|authori)")
 SPELLING = {  # British vs American markers
-    "british": r"\b\w+(?:isation|ised|ising|ise|yse|ysed)\b|\b(?:colour|behaviour|favour|labour|centre|programme|analyse|modelling|labelled)\w*\b",
-    "american": r"\b\w+(?:ization|ized|izing|ize|yze|yzed)\b|\b(?:color|behavior|favor|labor|center|analyze|modeling|labeled)\w*\b",
+    "british": r"\b" + _ROOTS + r"s(?:e|ed|es|ing|ation|ations)\b|\b(?:colour|behaviour|favour|labour|centre|programme|analys[ei]|modelling|labelled|neighbour)\w*\b",
+    "american": r"\b" + _ROOTS + r"z(?:e|ed|es|ing|ation|ations)\b|\b(?:color|behavior|favor|labor|center|analyz|modeling|labeled|neighbor)\w*\b",
 }
