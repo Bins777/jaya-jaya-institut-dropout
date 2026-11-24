@@ -22,3 +22,6 @@ submission.zip
 
 # Scaffolding, not part of the Dicoding submission
 CLAUDE_CODE_PROMPT.md
+
+# Style agent: learned profile and copies of your documents stay local
+style_agent_data/
