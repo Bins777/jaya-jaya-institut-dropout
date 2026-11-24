@@ -46,6 +46,11 @@ setx ANTHROPIC_API_KEY "your-key"      # then open a new terminal
 python mystyle.py
 ```
 
+To use Gemini instead of Claude, install `google-genai` and set `GEMINI_API_KEY`
+instead of `ANTHROPIC_API_KEY`. With both keys set, Claude is used unless
+`STYLE_AGENT_PROVIDER=gemini`. The Gemini model is `gemini-flash-latest`; change
+it with `STYLE_AGENT_GEMINI_MODEL`.
+
 The package form takes the same commands:
 
 ```bash

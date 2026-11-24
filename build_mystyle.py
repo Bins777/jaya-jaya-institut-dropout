@@ -21,8 +21,8 @@ it asks for a document you wrote, learns your style, then lets you paste text.
     python mystyle.py check "some text"    offline: does this text break your habits?
     python mystyle.py suggest "a word for very important"
 
-Needs: pip install -U anthropic pypdf python-docx
-Rewriting needs a Claude API key in the ANTHROPIC_API_KEY environment variable.
+Needs: pip install -U pypdf python-docx, plus google-genai (Gemini) or anthropic (Claude)
+Rewriting needs an API key: GEMINI_API_KEY for Gemini, or ANTHROPIC_API_KEY for Claude.
 
 Generated from the style_agent package by build_mystyle.py. Edit the package, not this file.
 """

@@ -72,6 +72,18 @@ class AnalyzeTest(unittest.TestCase):
         self.assertEqual(m.call_count, 2)
         self.assertIn("em dashes", m.call_args_list[1].args[1])
 
+    def test_provider_choice(self):
+        keys = ("STYLE_AGENT_PROVIDER", "GEMINI_API_KEY", "GOOGLE_API_KEY", "ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN")
+        clean = {k: "" for k in keys}
+        with mock.patch.dict("os.environ", clean):
+            self.assertEqual(llm.provider(), "claude")
+        with mock.patch.dict("os.environ", {**clean, "GEMINI_API_KEY": "x"}):
+            self.assertEqual(llm.provider(), "gemini")
+        with mock.patch.dict("os.environ", {**clean, "GEMINI_API_KEY": "x", "ANTHROPIC_API_KEY": "y"}):
+            self.assertEqual(llm.provider(), "claude")
+        with mock.patch.dict("os.environ", {**clean, "ANTHROPIC_API_KEY": "y", "STYLE_AGENT_PROVIDER": "gemini"}):
+            self.assertEqual(llm.provider(), "gemini")
+
 
 class PdfTidyTest(unittest.TestCase):
     def test_rebuilds_paragraphs_from_wrapped_pages(self):

@@ -10,8 +10,8 @@ it asks for a document you wrote, learns your style, then lets you paste text.
     python mystyle.py check "some text"    offline: does this text break your habits?
     python mystyle.py suggest "a word for very important"
 
-Needs: pip install -U anthropic pypdf python-docx
-Rewriting needs a Claude API key in the ANTHROPIC_API_KEY environment variable.
+Needs: pip install -U pypdf python-docx, plus google-genai (Gemini) or anthropic (Claude)
+Rewriting needs an API key: GEMINI_API_KEY for Gemini, or ANTHROPIC_API_KEY for Claude.
 
 Generated from the style_agent package by build_mystyle.py. Edit the package, not this file.
 """
@@ -817,7 +817,46 @@ class LLMError(RuntimeError):
     pass
 
 
+GEMINI_MODEL = os.environ.get("STYLE_AGENT_GEMINI_MODEL", "gemini-flash-latest")
+
+
+def provider():
+    """Which model service to use. STYLE_AGENT_PROVIDER=gemini|claude forces one;
+    otherwise Claude if it has a key, else Gemini if it has one."""
+    forced = os.environ.get("STYLE_AGENT_PROVIDER", "").lower()
+    if forced in ("gemini", "claude"):
+        return forced
+    has_gemini = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+    has_claude = os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("ANTHROPIC_AUTH_TOKEN")
+    return "gemini" if has_gemini and not has_claude else "claude"
+
+
+def complete_gemini(system, user):
+    try:
+        from google import genai
+        from google.genai import errors, types
+    except ImportError:
+        raise LLMError("Using Gemini needs the Google SDK: pip install -U google-genai")
+    try:
+        client = genai.Client()  # reads GEMINI_API_KEY (or GOOGLE_API_KEY)
+        response = client.models.generate_content(
+            model=GEMINI_MODEL, contents=user,
+            config=types.GenerateContentConfig(system_instruction=system))
+    except ValueError as e:
+        raise LLMError(f"No Gemini API key found. In PowerShell run:  setx GEMINI_API_KEY \"your-key\"  "
+                       f"then open a new terminal. ({e})")
+    except errors.APIError as e:
+        raise LLMError(f"Gemini API error {e.code}: {e.message} (model: {GEMINI_MODEL}; "
+                       "set STYLE_AGENT_GEMINI_MODEL to use another)")
+    text = (response.text or "").strip()
+    if not text:
+        raise LLMError("Gemini returned no text for this request.")
+    return text
+
+
 def complete(system, user, effort="high"):
+    if provider() == "gemini":
+        return complete_gemini(system, user)
     try:
         import anthropic
     except ImportError:
@@ -854,7 +893,8 @@ def complete(system, user, effort="high"):
     except TypeError as e:
         if "authentication" not in str(e):
             raise LLMError(f"The installed anthropic package is too old ({e}). Run: pip install -U anthropic")
-        raise LLMError("No Claude API key found. In PowerShell run:  setx ANTHROPIC_API_KEY \"your-key\"  "
+        raise LLMError("No API key found. For Gemini set GEMINI_API_KEY; for Claude set ANTHROPIC_API_KEY. "
+                       "In PowerShell run:  setx ANTHROPIC_API_KEY \"your-key\"  "
                        "then open a new terminal (macOS/Linux: export ANTHROPIC_API_KEY=your-key). "
                        "Without a key, `rewrite --print-prompt` gives a prompt you can paste into any model.")
     if message.stop_reason == "refusal":
