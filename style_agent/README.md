@@ -36,6 +36,18 @@ all the language-independent measurements.
 
 ## Use
 
+The quickest way is the single file `mystyle.py` in the repository root (built
+from this package by `build_mystyle.py`). Run it with no arguments, or with the
+Run button in VS Code, and it asks for your document and then lets you paste text:
+
+```powershell
+pip install -U anthropic pypdf python-docx
+setx ANTHROPIC_API_KEY "your-key"      # then open a new terminal
+python mystyle.py
+```
+
+The package form takes the same commands:
+
 ```bash
 pip install anthropic python-docx pypdf     # only anthropic is needed for rewriting
 export ANTHROPIC_API_KEY=...                # not needed for learn / report / check

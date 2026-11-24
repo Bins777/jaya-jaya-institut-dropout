@@ -20,32 +20,41 @@ def complete(system, user, effort="high"):
         import anthropic
     except ImportError:
         raise LLMError("This command needs the Anthropic SDK: pip install anthropic")
+    request = dict(
+        model=MODEL,
+        max_tokens=64000,
+        thinking={"type": "adaptive"},
+        output_config={"effort": effort},
+        # The style profile is identical on every call, so cache it.
+        system=[{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}],
+        messages=[{"role": "user", "content": user}],
+    )
     try:
         client = anthropic.Anthropic()
-        with client.beta.messages.stream(
-            model=MODEL,
-            max_tokens=64000,
-            thinking={"type": "adaptive"},
-            output_config={"effort": effort},
+        try:
             # If the model declines a request, the API retries it on a fallback model.
-            betas=["server-side-fallback-2026-07-01"],
-            fallbacks="default",
-            # The style profile is identical on every call, so cache it.
-            system=[{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}],
-            messages=[{"role": "user", "content": user}],
-        ) as stream:
-            message = stream.get_final_message()
+            with client.beta.messages.stream(betas=["server-side-fallback-2026-07-01"], fallbacks="default",
+                                             **request) as stream:
+                message = stream.get_final_message()
+        except TypeError as e:
+            if "unexpected keyword" not in str(e):
+                raise
+            with client.messages.stream(**request) as stream:  # older SDK without the fallbacks parameter
+                message = stream.get_final_message()
     except anthropic.AuthenticationError:
-        raise LLMError("No valid Claude credentials. Set ANTHROPIC_API_KEY (or run `ant auth login`).")
+        raise LLMError("The Claude API rejected the API key. Check ANTHROPIC_API_KEY.")
     except anthropic.RateLimitError:
         raise LLMError("Rate limited by the Claude API. Wait a moment and try again.")
     except anthropic.APIStatusError as e:
         raise LLMError(f"Claude API error {e.status_code}: {e.message}")
     except anthropic.APIConnectionError:
         raise LLMError("Could not reach the Claude API. Check your internet connection.")
-    except TypeError:  # no credentials at all surfaces as a TypeError in the SDK
-        raise LLMError("No Claude credentials found. Set ANTHROPIC_API_KEY (or run `ant auth login`), "
-                       "or use `rewrite --print-prompt` to get a prompt you can paste into any model.")
+    except TypeError as e:
+        if "authentication" not in str(e):
+            raise LLMError(f"The installed anthropic package is too old ({e}). Run: pip install -U anthropic")
+        raise LLMError("No Claude API key found. In PowerShell run:  setx ANTHROPIC_API_KEY \"your-key\"  "
+                       "then open a new terminal (macOS/Linux: export ANTHROPIC_API_KEY=your-key). "
+                       "Without a key, `rewrite --print-prompt` gives a prompt you can paste into any model.")
     if message.stop_reason == "refusal":
         raise LLMError("The model declined this request.")
     text = "".join(b.text for b in message.content if b.type == "text").strip()

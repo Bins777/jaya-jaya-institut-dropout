@@ -49,6 +49,7 @@ def cmd_learn(args):
             f.unlink()
     corpus.mkdir(parents=True, exist_ok=True)
     for path in args.files:
+        path = path.strip().strip("\"'")
         text = extract.load(path)
         digest = hashlib.sha1(text.encode("utf-8")).hexdigest()[:10]  # same document twice = stored once
         (corpus / f"{Path(path).stem}-{digest}.txt").write_text(text, encoding="utf-8")
@@ -138,11 +139,22 @@ def cmd_chat(args):
             print(f"Error: {e}", file=sys.stderr)
 
 
+def interactive(data_dir):
+    """No arguments (e.g. the Run button in an editor): set up if needed, then chat."""
+    _, _, pfile = _paths(data_dir)
+    if not pfile.exists():
+        print("No style profile yet. Give me a document you wrote (.pdf, .docx, .txt, .md).")
+        path = input("Path to your document (you can drag the file into this window): ").strip().strip("\"'& ")
+        cmd_learn(argparse.Namespace(data=data_dir, files=[path], deep=False, reset=False))
+        print()
+    cmd_chat(argparse.Namespace(data=data_dir))
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="style_agent",
                                  description="Learns how you write and rewrites other text in your wording.")
     ap.add_argument("--data", default="style_agent_data", help="where the profile is stored (default: %(default)s)")
-    sub = ap.add_subparsers(dest="command", required=True)
+    sub = ap.add_subparsers(dest="command")
 
     p = sub.add_parser("learn", help="analyze your document(s) and build/update the style profile")
     p.add_argument("files", nargs="*", help=".txt, .md, .docx or .pdf")
@@ -176,8 +188,13 @@ def main(argv=None):
     p.set_defaults(func=cmd_chat)
 
     args = ap.parse_args(argv)
+    for stream in (sys.stdout, sys.stderr):  # never crash on a console that cannot show a character
+        stream.reconfigure(errors="replace")
     try:
-        args.func(args)
+        if args.command is None:
+            interactive(args.data)
+        else:
+            args.func(args)
     except (FileNotFoundError, RuntimeError, ValueError) as e:  # LLMError is a RuntimeError
         sys.exit(f"Error: {e}")
 
